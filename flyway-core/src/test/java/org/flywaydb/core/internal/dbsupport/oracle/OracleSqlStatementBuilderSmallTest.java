@@ -34,9 +34,6 @@ public class OracleSqlStatementBuilderSmallTest {
         builder.addLine("spool &v_spoolfile.\n");
         assertTrue(builder.canDiscard());
         builder = new OracleSqlStatementBuilder();
-        builder.addLine("set serveroutput on;");
-        assertTrue(builder.canDiscard());
-        builder = new OracleSqlStatementBuilder();
         builder.addLine("set echo on;");
         assertTrue(builder.canDiscard());
         builder = new OracleSqlStatementBuilder();

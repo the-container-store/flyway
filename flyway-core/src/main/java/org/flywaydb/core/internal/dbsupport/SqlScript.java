@@ -83,6 +83,11 @@ public class SqlScript {
     private boolean failOnException;
 
     /**
+     * Whether Oracle DBMS_OUTPUT should be displayed
+     */
+    private boolean echoDbmsOutput;
+
+    /**
      * Creates a new sql script from this source.
      *
      * @param sqlScriptSource The sql script as a text block with all placeholders already replaced.
@@ -92,6 +97,7 @@ public class SqlScript {
         this.dbSupport = dbSupport;
         this.mixed = false;
         this.failOnException = true;
+        this.echoDbmsOutput = false;
         this.sqlStatements = parse(sqlScriptSource);
         this.resource = null;
 
@@ -117,6 +123,7 @@ public class SqlScript {
         this.resource = sqlScriptResource;
         this.mixed = mixed;
         this.failOnException = true;
+        this.echoDbmsOutput = false;
 
         String sqlScriptSource = sqlScriptResource.loadAsString(encoding);
         this.sqlStatements = parse(placeholderReplacer.replacePlaceholders(sqlScriptSource));
@@ -280,9 +287,14 @@ public class SqlScript {
             processExceptionDirective(sqlStatementBuilder);
             return;
         }
+        if (isServerOutputDirective(sqlStatementBuilder)) {
+            processServerOutputDirective(sqlStatementBuilder);
+            return;
+        }
 
         SqlStatement sqlStatement = sqlStatementBuilder.getSqlStatement();
         sqlStatement.setFailOnException(failOnException);
+        sqlStatement.setEchoDbmsOutput(echoDbmsOutput);
         statements.add(sqlStatement);
 
         if (sqlStatementBuilder.executeInTransaction()) {
@@ -331,6 +343,38 @@ public class SqlScript {
             failOnException = false;
         } else if (sqlStatementBuilder.isFailOnExceptionDirective()) {
             failOnException = true;
+        }
+    }
+
+    /**
+     * Determines if this statement is an Oracle SQL*Plus serveroutput directive.
+     *
+     * An Oracle SQL*Plus serveroutput directive tells Flyway whether or not to echo DBMS_OUTPUT
+     * for all subsequent statements.
+     *
+     * @param sqlStatementBuilder the statement to evaluate
+     * @return {@code true} if this statement is an Oracle SQL*Plus serveroutput directive, {@code false} otherwise.
+     */
+    private boolean isServerOutputDirective(SqlStatementBuilder sqlStatementBuilder) {
+        if (sqlStatementBuilder.isServerOutputOnDirective() || sqlStatementBuilder.isServerOutputOffDirective()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Records the instructions from an Oracle SQL*Plus serveroutput directive.
+     *
+     * An Oracle SQL*Plus serveroutput directive tells Flyway whether or not to echo DBMS_OUTPUT
+     * for all subsequent statements.
+     *
+     * @param sqlStatementBuilder the statement to evaluate
+     */
+    private void processServerOutputDirective(SqlStatementBuilder sqlStatementBuilder) {
+        if (sqlStatementBuilder.isServerOutputOnDirective()) {
+            echoDbmsOutput = true;
+        } else if (sqlStatementBuilder.isServerOutputOffDirective()) {
+            echoDbmsOutput = false;
         }
     }
 

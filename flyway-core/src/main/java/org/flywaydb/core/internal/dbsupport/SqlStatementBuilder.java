@@ -477,6 +477,26 @@ public class SqlStatementBuilder {
     }
 
     /**
+     * Whether this statement is an instruction for flyway to echo DBMS_OUTPUT
+     * for all subsequent statements
+     *
+     * @return {@code true} if this is a {@code serveroutput on} directive
+     */
+    public boolean isServerOutputOnDirective() {
+        return false;
+    }
+
+    /**
+     * Whether this statement is an instruction for flyway to not echo DBMS_OUTPUT
+     * for all subsequent statements
+     *
+     * @return {@code true} if this is a {@code serveroutput off} directive
+     */
+    public boolean isServerOutputOffDirective() {
+        return false;
+    }
+
+    /**
      * The types of tokens relevant for string delimiter related parsing.
      */
     private enum TokenType {

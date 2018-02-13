@@ -34,10 +34,16 @@ public abstract class AbstractSqlStatement implements SqlStatement {
      */
     private boolean failOnException;
 
+    /**
+     * Whether Oracle DBMS_OUTPUT should be displayed
+     */
+    private boolean echoDbmsOutput;
+
     public AbstractSqlStatement(String sql, int lineNumber) {
         this.sql = sql;
         this.lineNumber = lineNumber;
         this.failOnException = true;
+        this.echoDbmsOutput = false;
     }
 
     @Override
@@ -58,5 +64,15 @@ public abstract class AbstractSqlStatement implements SqlStatement {
     @Override
     public void setFailOnException(boolean failOnException) {
         this.failOnException = failOnException;
+    }
+
+    @Override
+    public boolean getEchoDbmsOutput() {
+        return echoDbmsOutput;
+    }
+
+    @Override
+    public void setEchoDbmsOutput(boolean echoDbmsOutput) {
+        this.echoDbmsOutput = echoDbmsOutput;
     }
 }

@@ -51,4 +51,16 @@ public interface SqlStatement {
      *                                    with the rest of the migration.
      */
     void setFailOnException(boolean failOnException);
+
+    /**
+     * @return {@code true} if the executor should log the Oracle DBMS_OUTPUT.
+     */
+    boolean getEchoDbmsOutput();
+
+    /**
+     * Specify whether the executor should log the Oracle DBMS_OUTPUT.
+     *
+     * @param echoDbmsOutput {@code true} if the executor should log the Oracle DBMS_OUTPUT.
+     */
+    void setEchoDbmsOutput(boolean echoDbmsOutput);
 }

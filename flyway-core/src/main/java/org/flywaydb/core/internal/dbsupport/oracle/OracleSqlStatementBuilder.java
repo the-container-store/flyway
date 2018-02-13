@@ -122,7 +122,7 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
     }
 
     private boolean isSqlPlusCommand() {
-        return statementStart.matches("SET\\s+(DEFINE|ECHO|TIMING|SERVEROUTPUT)\\s+(ON|OFF).*")
+        return statementStart.matches("SET\\s+(DEFINE|ECHO|TIMING)\\s+(ON|OFF).*")
                 || statementStart.matches("COLUMN\\s+SPOOLFILE.*")
                 || statementStart.matches("SPOOL\\s+(OFF|&V_SPOOLFILE).*");
     }
@@ -135,5 +135,15 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
     @Override
     public boolean isFailOnExceptionDirective() {
         return statementStart.matches("WHENEVER\\s+SQLERROR\\s+EXIT\\s+FAILURE\\s*;\\s*");
+    }
+
+    @Override
+    public boolean isServerOutputOnDirective() {
+        return statementStart.matches("SET\\s+SERVEROUTPUT\\s+ON\\s*;\\s*");
+    }
+
+    @Override
+    public boolean isServerOutputOffDirective() {
+        return statementStart.matches("SET\\s+SERVEROUTPUT\\s+OFF\\s*;\\s*");
     }
 }

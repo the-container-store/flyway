@@ -33,6 +33,6 @@ public class StandardSqlStatement extends AbstractSqlStatement {
 
     @Override
     public void execute(JdbcTemplate jdbcTemplate) throws SQLException {
-        jdbcTemplate.executeStatement(sql);
+        jdbcTemplate.executeStatement(sql, getEchoDbmsOutput());
     }
 }

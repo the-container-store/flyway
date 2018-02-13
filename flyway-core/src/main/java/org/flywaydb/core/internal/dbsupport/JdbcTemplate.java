@@ -20,14 +20,7 @@ import org.flywaydb.core.internal.util.jdbc.RowMapper;
 import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +41,10 @@ public class JdbcTemplate {
      * The type to assign to a null value.
      */
     private final int nullType;
+
+    private PreparedStatement enableDbmsOutputStatement = null;
+    private PreparedStatement disableDbmsOutputStatement = null;
+    private CallableStatement fetchDbmsOutputStatement = null;
 
     /**
      * Creates a new JdbcTemplate.
@@ -269,13 +266,33 @@ public class JdbcTemplate {
      * @throws SQLException when the execution failed.
      */
     public void executeStatement(String sql) throws SQLException {
+        executeStatement(sql, false);
+    }
+
+    /**
+     * Executes this sql statement using an ordinary Statement.
+     *
+     * @param sql            The statement to execute.
+     * @param echoDbmsOutput {@code true} if the Oracle DBMS_OUTPUT should be logged
+     * @throws SQLException when the execution failed.
+     */
+    public void executeStatement(String sql, boolean echoDbmsOutput) throws SQLException {
         Statement statement = null;
         try {
             statement = connection.createStatement();
             statement.setEscapeProcessing(false);
             boolean hasResults = false;
             try {
+                if (echoDbmsOutput) {
+                    getEnableDbmsOutputStatement().executeUpdate();
+                }
+
                 hasResults = statement.execute(sql);
+
+                if (echoDbmsOutput) {
+                    logDbmsOutput();
+                    getDisableDbmsOutputStatement().executeUpdate();
+                }
             } finally {
                 @SuppressWarnings("ThrowableResultOfMethodCallIgnored") SQLWarning warning = statement.getWarnings();
                 while (warning != null) {
@@ -370,5 +387,52 @@ public class JdbcTemplate {
         }
 
         return results;
+    }
+
+    private void logDbmsOutput() throws SQLException {
+        CallableStatement call = getFetchDbmsOutputStatement();
+        call.execute();
+
+        Array array = null;
+        try {
+            array = call.getArray(1);
+            for (Object line : (Object[]) array.getArray()) {
+                if (line != null) {
+                    LOG.info(line.toString());
+                }
+            }
+        }
+        finally {
+            if (array != null)
+                array.free();
+        }
+    }
+
+    private PreparedStatement getEnableDbmsOutputStatement() throws SQLException {
+        if (enableDbmsOutputStatement == null) {
+            enableDbmsOutputStatement = connection.prepareStatement("begin dbms_output.enable(); end;");
+        }
+        return enableDbmsOutputStatement;
+    }
+
+    private PreparedStatement getDisableDbmsOutputStatement() throws SQLException {
+        if (disableDbmsOutputStatement == null) {
+            disableDbmsOutputStatement = connection.prepareStatement("begin dbms_output.disable(); end;");
+        }
+        return disableDbmsOutputStatement;
+    }
+
+    private CallableStatement getFetchDbmsOutputStatement() throws SQLException {
+        if (fetchDbmsOutputStatement == null) {
+            fetchDbmsOutputStatement = connection.prepareCall(
+                    "declare "
+                            + "  num integer := 1000;"
+                            + "begin "
+                            + "  dbms_output.get_lines(?, num);"
+                            + "end;");
+            fetchDbmsOutputStatement.registerOutParameter(1, Types.ARRAY,
+                    "DBMSOUTPUT_LINESARRAY");
+        }
+        return fetchDbmsOutputStatement;
     }
 }
