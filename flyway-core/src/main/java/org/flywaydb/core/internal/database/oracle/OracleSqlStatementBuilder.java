@@ -21,6 +21,7 @@ import org.flywaydb.core.internal.database.Delimiter;
 import org.flywaydb.core.internal.sqlscript.SqlStatement;
 import org.flywaydb.core.internal.database.SqlStatementBuilder;
 import org.flywaydb.core.internal.util.StringUtils;
+import org.flywaydb.core.internal.util.jdbc.ContextImpl;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +31,11 @@ import java.util.regex.Pattern;
  */
 public class OracleSqlStatementBuilder extends SqlStatementBuilder {
     private static final Log LOG = LogFactory.getLog(SqlStatementBuilder.class);
+
+    /**
+     * Characters that are acceptable at the end of a SQL*Plus directive line
+     */
+    private static final String SQL_PLUS_OPTIONAL_LINE_ENDING = "\\s*;?\\s*(--.*)?";
 
     /**
      * Regex for keywords that can appear before a string literal without being separated by a space.
@@ -145,6 +151,16 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
      */
     private String statementStart = "";
 
+    /**
+     * Whether an exception in this statement should cause the migration to fail.
+     */
+    private boolean failOnException;
+
+    /**
+     * Whether Oracle DBMS_OUTPUT should be displayed for this statement
+     */
+    private boolean echoDbmsOutput;
+
     public OracleSqlStatementBuilder(Delimiter defaultDelimiter) {
         super(defaultDelimiter);
     }
@@ -181,6 +197,17 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
 
 
 
+    @Override
+    public boolean isTerminated() {
+        return super.isTerminated() || isExceptionDirective() || isServerOutputDirective();
+    }
+
+    @Override
+    public <C extends ContextImpl> SqlStatement<C> getSqlStatement() {
+        //noinspection unchecked
+        return (SqlStatement<C>) new OracleSqlStatement(lineNumber, statement.toString(),
+                failOnException, echoDbmsOutput);
+    }
 
     @Override
     protected void applyStateChanges(String line) {
@@ -259,10 +286,49 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
     @Override
     public boolean canDiscard() {
         return super.canDiscard()
+                || isSqlPlusCommand()
 
 
 
                 || statementStart.equals("/ "); // Lone / that can safely be ignored
+    }
+
+    private boolean isSqlPlusCommand() {
+        return statementStart.matches("SET\\s+(DEFINE|ECHO|TIMING)\\s+(ON|OFF).*")
+                || statementStart.matches("COLUMN\\s+SPOOLFILE.*")
+                || statementStart.matches("SPOOL\\s+(OFF|&V_SPOOLFILE).*");
+    }
+
+    public boolean isIgnoreExceptionDirective() {
+        return statementStart.matches("WHENEVER\\s+SQLERROR\\s+CONTINUE" + SQL_PLUS_OPTIONAL_LINE_ENDING);
+    }
+
+    public boolean isFailOnExceptionDirective() {
+        return statementStart.matches("WHENEVER\\s+SQLERROR\\s+EXIT\\s+FAILURE" + SQL_PLUS_OPTIONAL_LINE_ENDING);
+    }
+
+    public boolean isExceptionDirective() {
+        return isIgnoreExceptionDirective() || isFailOnExceptionDirective();
+    }
+
+    public boolean isServerOutputOnDirective() {
+        return statementStart.matches("SET\\s+SERVEROUTPUT\\s+ON" + SQL_PLUS_OPTIONAL_LINE_ENDING);
+    }
+
+    public boolean isServerOutputOffDirective() {
+        return statementStart.matches("SET\\s+SERVEROUTPUT\\s+OFF" + SQL_PLUS_OPTIONAL_LINE_ENDING);
+    }
+
+    public boolean isServerOutputDirective() {
+        return isServerOutputOnDirective() || isServerOutputOffDirective();
+    }
+
+    public void setFailOnException(boolean failOnException) {
+        this.failOnException = failOnException;
+    }
+
+    public void setEchoDbmsOutput(boolean echoDbmsOutput) {
+        this.echoDbmsOutput = echoDbmsOutput;
     }
 
 

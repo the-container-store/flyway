@@ -21,6 +21,29 @@ import org.flywaydb.core.internal.util.jdbc.ContextImpl;
 import java.util.List;
 
 public class OracleContextImpl extends ContextImpl {
+    /**
+     * Whether the executor should treat exceptions as failures and stop the migration.
+     */
+    private boolean failOnException;
+
+
+
+    /**
+     * @return {@code true} if the executor should treat exceptions as failures and stop the migration.
+     */
+    boolean getFailOnException() {
+        return failOnException;
+    }
+
+    /**
+     * Specify whether the executor should treat exceptions as failures and stop the migration.
+     *
+     * @param failOnException {@code true} if the executor should halt when an exception is thrown,
+     * or {@code false} if the executor should ignore exceptions and continue with the rest of the migration.
+     */
+    public void setFailOnException(boolean failOnException) {
+        this.failOnException = failOnException;
+    }
 
 
 

@@ -25,6 +25,15 @@ https://flywaydb.org
 ## How to contribute
 https://flywaydb.org/documentation/contribute/
 
+## How to build
+Requires Java 9 and [jcenter](http://jcenter.bintray.com) to build.
+
+```
+mvn clean install -Dassembly.tarLongFileMode=posix
+```
+
+You may want to set the version in `pom.xml` (as well as `flyway-core/pom.xml`) before building an artifact. 
+
 ## About
 Flyway is brought to you by [Axel Fontaine](https://twitter.com/axelfontaine) and [Boxfuse](https://boxfuse.com) with the help of [many contributors](https://flywaydb.org/documentation/contribute/hallOfFame.html).
 

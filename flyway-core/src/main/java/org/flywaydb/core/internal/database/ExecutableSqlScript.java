@@ -281,7 +281,7 @@ public abstract class ExecutableSqlScript<C extends ContextImpl> extends SqlScri
 
     protected abstract SqlStatementBuilder createSqlStatementBuilder();
 
-    private void addStatement(List<SqlStatement<C>> statements, SqlStatementBuilder sqlStatementBuilder) {
+    protected void addStatement(List<SqlStatement<C>> statements, SqlStatementBuilder sqlStatementBuilder) {
         SqlStatement<C> sqlStatement = sqlStatementBuilder.getSqlStatement();
         statements.add(sqlStatement);
 

@@ -18,6 +18,7 @@ package org.flywaydb.core.internal.util.jdbc;
 import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -247,6 +248,18 @@ public class JdbcTemplate {
         } finally {
             JdbcUtils.closeStatement(statement);
         }
+    }
+
+    public Object execute(CallableStatementCreator csc, CallableStatementCallback action) throws SQLException {
+        CallableStatement cs = null;
+        try {
+            cs = csc.createCallableStatement(connection);
+            cs.execute();
+            return action.doInCallableStatement(cs);
+        } finally {
+            JdbcUtils.closeStatement(cs);
+        }
+
     }
 
     /**

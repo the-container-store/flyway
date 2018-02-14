@@ -87,7 +87,7 @@ public class OracleDatabase extends Database {
         }
 
         if (majorVersion == 10 || majorVersion == 11) {
-        throw new org.flywaydb.core.internal.exception.FlywayEnterpriseUpgradeRequiredException("Oracle", "Oracle", "" + majorVersion);
+//        throw new org.flywaydb.core.internal.exception.FlywayEnterpriseUpgradeRequiredException("Oracle", "Oracle", "" + majorVersion);
         }
 
         if (majorVersion > 12) {
