@@ -286,15 +286,15 @@ public class OracleSqlStatementBuilder extends SqlStatementBuilder {
     @Override
     public boolean canDiscard() {
         return super.canDiscard()
-                || isSqlPlusCommand()
+                || isDiscardableSqlPlusCommand()
 
 
 
                 || statementStart.equals("/ "); // Lone / that can safely be ignored
     }
 
-    private boolean isSqlPlusCommand() {
-        return statementStart.matches("SET\\s+(DEFINE|ECHO|TIMING)\\s+(ON|OFF).*")
+    private boolean isDiscardableSqlPlusCommand() {
+        return statementStart.matches("SET\\s+(DEFINE|ECHO|TIMING|SQLBL(ANKLINES)?)\\s+(ON|OFF).*")
                 || statementStart.matches("COLUMN\\s+SPOOLFILE.*")
                 || statementStart.matches("SPOOL\\s+(OFF|&V_SPOOLFILE).*");
     }
